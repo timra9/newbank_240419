@@ -8,8 +8,8 @@
     <body>
         <h1>Currencies of NewBank</h1>
         <ul>
-            {% for currency, rate in currencies.items %}
-                <li>{{ currency }}: {{ rate }}</li>
+            {% for currency in currencies %}
+                <li>{{ currency.name }} ({{ currency.code }}): {{ currency.rate_to_usd }}</li>
             {% endfor %}
         </ul>
 

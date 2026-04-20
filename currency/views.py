@@ -1,28 +1,51 @@
 from django.shortcuts import render
-from django.http import HttpResponseNotFound
-
-currencies = {
-    "USD": 1.0,
-    "EUR": 0.85,
-    "GBP": 0.75,
-    "UZS": 12200.0,
-    "JPY": 110.0,
-    "KRW": 1150.0,
-}
+from django.http import HttpResponseNotFound, HttpResponse
+from .models import Currency
+from .serializer import CurrencySerializer
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.parsers import JSONParser
+from rest_framework import status
 
 # Create your views here.
 def index(request):
+    currencies = Currency.objects.all()
     return render(request, 'currency/index.html', 
                   {'currencies': currencies})
 
-def exchange(request):
-    from_currency = request.GET.get('from', '').upper()
-    to_currency = request.GET.get('to', '').upper()
-    if from_currency not in currencies or to_currency not in currencies:
-        return HttpResponseNotFound("Currency not supported.")
+@csrf_exempt
+def currency_api(request):
+    if request.method == 'GET':
+        currencies = Currency.objects.all()
+        serializer = CurrencySerializer(currencies, many=True)
+        return JsonResponse(serializer.data, safe=False)
+    if request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = CurrencySerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return HttpResponseNotFound()
 
-    exchange_rate = currencies[to_currency] / currencies[from_currency]
-    return render(request, 'currency/exchange.html',
-                  {'from': from_currency,
-                   'to': to_currency,
-                   'rate': exchange_rate})
+def exchange_api(request):
+    from_code = request.GET.get('from')
+    to_code = request.GET.get('to')
+    amount = request.GET.get('amount')
+    if not amount:
+        return JsonResponse({'error': 'Amount is required'}, status=400)
+    amount = float(amount)
+    
+    from_currency = Currency.objects.filter(code=from_code).first()
+
+    if not from_currency:
+        return JsonResponse({'error': 'From currency not found'}, status=400)
+    
+    to_currency = Currency.objects.filter(code=to_code).first()
+    if not to_currency:
+        return JsonResponse({'error': 'To currency not found'}, status=400)
+    # Convert amount to USD first, then to target currency
+    amount_in_usd = float(amount) / float(from_currency.rate_to_usd)
+    converted_amount = amount_in_usd * float(to_currency.rate_to_usd)
+    
+    return JsonResponse({'result': converted_amount})
