@@ -13,7 +13,7 @@
             <h1>Welcome to NewBank</h1>
             <ul>
                 {% if user.is_authenticated %}
-                    <li><a href="{% url 'accounts:my_account' username=user.username %}">My account</a></li>
+                    <a href="{% url 'accounts:my_account' %}">My account</a>
                 {% else %}
                      <li><a href="{% url 'accounts:login' %}">Login</a></li>
                 {% endif %}
