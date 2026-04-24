@@ -10,7 +10,7 @@ def my_account(request, username):
 
 def login(request):
     if request.user.is_authenticated:
-        return redirect('accounts:my_account', username=request.user.username)
+        return redirect('accounts:my_account')
     error_message = None
     if request.method == 'POST':
         username = request.POST['username']
@@ -18,7 +18,7 @@ def login(request):
         user = authenticate(request, username=username, password=password)
         if user:
             auth_login(request, user)
-            return redirect('accounts:my_account', username=username)
+            return redirect('accounts:my_account')
         error_message = 'Invalid username or password'
     return render(request, 'accounts/login.html', {'error_message': error_message})
 
@@ -42,5 +42,5 @@ def register(request):
         else:
             user = User.objects.create_user(username=username, password=password, email=email)
             auth_login(request, user)
-            return redirect('accounts:my_account', username=username)
+            return redirect('accounts:my_account')
     return render(request, 'accounts/register.html', {'error_message': error_message})
