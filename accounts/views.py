@@ -4,8 +4,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 
 # Create your views here.
-def my_account(request, username):
-    user = User.objects.get(username=username)
+def my_account(request):
+    user = request.user
     return render(request, 'accounts/my_account.html', {'user': user})
 
 def login(request):
@@ -28,7 +28,7 @@ def logout(request):
 
 def register(request):
     if request.user.is_authenticated:
-        return redirect('accounts:my_account', username=request.user.username)
+        return redirect('accounts:my_account')
     error_message = None
     if request.method == 'POST':
         username = request.POST['username']
